@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeftIcon } from "@/components/icons/ChevronLeftIcon";
 import { ChevronRightIcon } from "@/components/icons/ChevronRightIcon";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,16 @@ interface ProductPaginationProps {
   onPageChange: (page: number) => void;
 }
 
-function getPageNumbers(currentPage: number, totalPages: number): (number | "...")[] {
+function getPageNumbers(
+  currentPage: number,
+  totalPages: number,
+  compact: boolean
+): (number | "...")[] {
+  if (compact) {
+    if (totalPages <= 3) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const start = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
+    return [start, start + 1, start + 2];
+  }
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
@@ -36,10 +45,18 @@ export function ProductPagination({
 }: ProductPaginationProps) {
   const [jumpIndex, setJumpIndex] = useState<number | null>(null);
   const [jumpValue, setJumpValue] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const startItem = (currentPage - 1) * limit + 1;
   const endItem = Math.min(currentPage * limit, total);
-  const pages = getPageNumbers(currentPage, totalPages);
+  const pages = getPageNumbers(currentPage, totalPages, isMobile);
 
   function handleJump() {
     const page = parseInt(jumpValue);
