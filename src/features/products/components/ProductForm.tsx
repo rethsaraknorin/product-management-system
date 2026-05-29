@@ -1,14 +1,17 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { productSchema, type ProductFormValues } from "../schemas/product.schema";
 import { useCreateProduct } from "../hooks/useCreateProduct";
+import { useEditProduct } from "../hooks/useEditProduct";
 import { useCategories } from "../hooks/useCategories";
 import { Input } from "@/components/ui/input";
 import { PlusIcon } from "@/components/icons/PlusIcon";
+import { SaveIcon } from "@/components/icons/SaveIcon";
 
 interface ProductFormProps {
   defaultValues?: Partial<ProductFormValues>;
@@ -16,14 +19,17 @@ interface ProductFormProps {
   mode: "create" | "edit";
 }
 
-export function ProductForm({ defaultValues, mode }: ProductFormProps) {
+export function ProductForm({ defaultValues, productId, mode }: ProductFormProps) {
   const router = useRouter();
-  const { mutate: createProduct, isPending } = useCreateProduct();
+  const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
+  const { mutate: editProduct, isPending: isEditing } = useEditProduct(productId ?? 0);
   const { data: categories, isLoading: categoriesLoading } = useCategories();
+  const isPending = isCreating || isEditing;
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -39,6 +45,22 @@ export function ProductForm({ defaultValues, mode }: ProductFormProps) {
     },
   });
 
+  useEffect(() => {
+    if (mode === "edit" && !categoriesLoading && defaultValues) {
+      reset({
+        title: "",
+        description: "",
+        price: "",
+        discountPercentage: "",
+        sku: "",
+        stock: "",
+        category: "",
+        ...defaultValues,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoriesLoading]);
+
   function onSubmit(values: ProductFormValues) {
     if (mode === "create") {
       createProduct(values, {
@@ -48,6 +70,13 @@ export function ProductForm({ defaultValues, mode }: ProductFormProps) {
         },
         onError: () => {
           toast.error("Failed to create product. Please try again.");
+        },
+      });
+    } else {
+      editProduct(values, {
+        onSettled: () => {
+          toast.success("Product updated successfully");
+          router.push("/products");
         },
       });
     }
@@ -138,182 +167,140 @@ export function ProductForm({ defaultValues, mode }: ProductFormProps) {
               disabled={isPending}
               className="flex items-center gap-1.5 h-10 px-4 bg-brand text-white text-sm font-medium rounded-lg hover:bg-brand/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <PlusIcon className="w-4 h-4" />
-              {isPending ? "Saving..." : mode === "create" ? "Add Product" : "Save Changes"}
+              {mode === "create" ? (
+                <PlusIcon className="w-4 h-4" />
+              ) : (
+                <SaveIcon className="w-4 h-4" />
+              )}
+              {isPending ? "Saving..." : mode === "create" ? "Add Product" : "Save Product"}
             </button>
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1 flex flex-col gap-4">
-            {/* General Information */}
-            <div className="bg-white rounded-xl p-6 shadow-[0px_4px_30px_0px_#2E2D740D]">
-              <h2 className="text-base font-semibold text-dark mb-4">General Information</h2>
-              <div className="flex flex-col gap-3.5">
-                <div>
-                  <label className="block text-sm font-medium text-body mb-1.5">Product Name</label>
-                  <Input
-                    placeholder="Type product name here..."
-                    {...register("title")}
-                    className={errors.title ? "border-warning focus-visible:border-warning" : ""}
-                  />
-                  {errors.title && (
-                    <p className="mt-1 text-xs text-warning">{errors.title.message}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-body mb-1.5">Description</label>
-                  <textarea
-                    placeholder="Type product description here..."
-                    {...register("description")}
-                    rows={6}
-                    className="w-full px-3 py-2 text-sm text-dark placeholder:text-neutral border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-colors"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Category — mobile only */}
-            <div className="lg:hidden bg-white rounded-xl p-6 shadow-[0px_4px_30px_0px_#2E2D740D]">
-              <h2 className="text-base font-semibold text-dark mb-4">Category</h2>
+        <div className="flex flex-col lg:grid lg:grid-cols-[1fr_264px] gap-4">
+          {/* General Information */}
+          <div className="order-1 lg:col-start-1 lg:row-start-1 bg-white rounded-xl p-6 shadow-[0px_4px_30px_0px_#2E2D740D]">
+            <h2 className="text-base font-semibold text-dark mb-4">General Information</h2>
+            <div className="flex flex-col gap-3.5">
               <div>
-                <label className="block text-sm font-medium text-body mb-1.5">
-                  Product Category
-                </label>
-                <div className="relative">
-                  <select
-                    {...register("category")}
-                    className={`w-full h-9 px-3 pr-8 text-sm text-neutral bg-white border rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-colors ${errors.category ? "border-warning" : "border-gray-200"}`}
-                  >
-                    <option value="">Select a category</option>
-                    {categoriesLoading ? (
-                      <option disabled>Loading...</option>
-                    ) : (
-                      categories?.map((cat) => (
-                        <option key={cat.slug} value={cat.slug}>
-                          {cat.name}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-neutral">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path
-                        d="M4.27602 6H11.724C11.8559 6.00003 11.9847 6.03914 12.0943 6.1124C12.2039 6.18565 12.2894 6.28976 12.3398 6.41156C12.3903 6.53336 12.4035 6.66738 12.3777 6.79669C12.352 6.92599 12.2886 7.04476 12.1954 7.138L8.47135 10.862C8.34634 10.987 8.1768 11.0572 8.00002 11.0572C7.82325 11.0572 7.65371 10.987 7.52869 10.862L3.80469 7.138C3.71148 7.04476 3.64801 6.92599 3.6223 6.79669C3.59659 6.66738 3.60979 6.53336 3.66024 6.41156C3.71068 6.28976 3.79611 6.18565 3.90572 6.1124C4.01532 6.03914 4.14419 6.00003 4.27602 6Z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                {errors.category && (
-                  <p className="mt-1 text-xs text-warning">{errors.category.message}</p>
+                <label className="block text-sm font-medium text-body mb-1.5">Product Name</label>
+                <Input
+                  placeholder="Type product name here..."
+                  {...register("title")}
+                  className={errors.title ? "border-warning focus-visible:border-warning" : ""}
+                />
+                {errors.title && (
+                  <p className="mt-1 text-xs text-warning">{errors.title.message}</p>
                 )}
               </div>
-            </div>
-
-            {/* Pricing */}
-            <div className="bg-white rounded-xl p-6 shadow-[0px_4px_30px_0px_#2E2D740D]">
-              <h2 className="text-base font-semibold text-dark mb-4">Pricing</h2>
-              <div className="flex flex-col gap-3.5">
-                <div>
-                  <label className="block text-sm font-medium text-body mb-1.5">Base Price</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-neutral">
-                      $
-                    </span>
-                    <Input
-                      placeholder="Type base price here..."
-                      {...register("price")}
-                      className={`pl-7 ${errors.price ? "border-warning focus-visible:border-warning" : ""}`}
-                    />
-                  </div>
-                  {errors.price && (
-                    <p className="mt-1 text-xs text-warning">{errors.price.message}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-body mb-1.5">
-                    Discount Percentage (%)
-                  </label>
-                  <Input
-                    placeholder="Type discount percentage..."
-                    {...register("discountPercentage")}
-                    className={
-                      errors.discountPercentage ? "border-warning focus-visible:border-warning" : ""
-                    }
-                  />
-                  {errors.discountPercentage && (
-                    <p className="mt-1 text-xs text-warning">{errors.discountPercentage.message}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Inventory */}
-            <div className="bg-white rounded-xl p-6 shadow-[0px_4px_30px_0px_#2E2D740D]">
-              <h2 className="text-base font-semibold text-dark mb-4">Inventory</h2>
-              <div className="grid grid-cols-2 gap-3.5">
-                <div>
-                  <label className="block text-sm font-medium text-body mb-1.5">SKU</label>
-                  <Input
-                    placeholder="Type product SKU here..."
-                    {...register("sku")}
-                    className={errors.sku ? "border-warning focus-visible:border-warning" : ""}
-                  />
-                  {errors.sku && <p className="mt-1 text-xs text-warning">{errors.sku.message}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-body mb-1.5">Quantity</label>
-                  <Input
-                    placeholder="Type product quantity here..."
-                    {...register("stock")}
-                    className={errors.stock ? "border-warning focus-visible:border-warning" : ""}
-                  />
-                  {errors.stock && (
-                    <p className="mt-1 text-xs text-warning">{errors.stock.message}</p>
-                  )}
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-body mb-1.5">Description</label>
+                <textarea
+                  placeholder="Type product description here..."
+                  {...register("description")}
+                  rows={6}
+                  className="w-full px-3 py-2 text-sm text-dark placeholder:text-neutral border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-colors"
+                />
               </div>
             </div>
           </div>
 
-          {/* Right sidebar — desktop only */}
-          <div className="hidden lg:block lg:w-66 shrink-0">
-            <div className="bg-white rounded-xl p-6 shadow-[0px_4px_30px_0px_#2E2D740D]">
-              <h2 className="text-base font-semibold text-dark mb-4">Category</h2>
+          {/* Category — single element, order-2 on mobile, right col on desktop */}
+          <div className="order-2 lg:col-start-2 lg:row-start-1 lg:self-start bg-white rounded-xl p-6 shadow-[0px_4px_30px_0px_#2E2D740D]">
+            <h2 className="text-base font-semibold text-dark mb-4">Category</h2>
+            <div>
+              <label className="block text-sm font-medium text-body mb-1.5">Product Category</label>
+              <div className="relative">
+                <select
+                  {...register("category")}
+                  className={`w-full h-9 px-3 pr-8 text-sm text-neutral bg-white border rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-colors ${errors.category ? "border-warning" : "border-gray-200"}`}
+                >
+                  <option value="">Select a category</option>
+                  {categoriesLoading ? (
+                    <option disabled>Loading...</option>
+                  ) : (
+                    categories?.map((cat) => (
+                      <option key={cat.slug} value={cat.slug}>
+                        {cat.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-neutral">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M4.27602 6H11.724C11.8559 6.00003 11.9847 6.03914 12.0943 6.1124C12.2039 6.18565 12.2894 6.28976 12.3398 6.41156C12.3903 6.53336 12.4035 6.66738 12.3777 6.79669C12.352 6.92599 12.2886 7.04476 12.1954 7.138L8.47135 10.862C8.34634 10.987 8.1768 11.0572 8.00002 11.0572C7.82325 11.0572 7.65371 10.987 7.52869 10.862L3.80469 7.138C3.71148 7.04476 3.64801 6.92599 3.6223 6.79669C3.59659 6.66738 3.60979 6.53336 3.66024 6.41156C3.71068 6.28976 3.79611 6.18565 3.90572 6.1124C4.01532 6.03914 4.14419 6.00003 4.27602 6Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </div>
+              </div>
+              {errors.category && (
+                <p className="mt-1 text-xs text-warning">{errors.category.message}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Pricing */}
+          <div className="order-3 lg:col-start-1 lg:row-start-2 bg-white rounded-xl p-6 shadow-[0px_4px_30px_0px_#2E2D740D]">
+            <h2 className="text-base font-semibold text-dark mb-4">Pricing</h2>
+            <div className="flex flex-col gap-3.5">
+              <div>
+                <label className="block text-sm font-medium text-body mb-1.5">Base Price</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-neutral">
+                    $
+                  </span>
+                  <Input
+                    placeholder="Type base price here..."
+                    {...register("price")}
+                    className={`pl-7 ${errors.price ? "border-warning focus-visible:border-warning" : ""}`}
+                  />
+                </div>
+                {errors.price && (
+                  <p className="mt-1 text-xs text-warning">{errors.price.message}</p>
+                )}
+              </div>
               <div>
                 <label className="block text-sm font-medium text-body mb-1.5">
-                  Product Category
+                  Discount Percentage (%)
                 </label>
-                <div className="relative">
-                  <select
-                    {...register("category")}
-                    className={`w-full h-9 px-3 pr-8 text-sm text-neutral bg-white border rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-colors ${
-                      errors.category ? "border-warning" : "border-gray-200"
-                    }`}
-                  >
-                    <option value="">Select a category</option>
-                    {categoriesLoading ? (
-                      <option disabled>Loading...</option>
-                    ) : (
-                      categories?.map((cat) => (
-                        <option key={cat.slug} value={cat.slug}>
-                          {cat.name}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-neutral">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path
-                        d="M4.27602 6H11.724C11.8559 6.00003 11.9847 6.03914 12.0943 6.1124C12.2039 6.18565 12.2894 6.28976 12.3398 6.41156C12.3903 6.53336 12.4035 6.66738 12.3777 6.79669C12.352 6.92599 12.2886 7.04476 12.1954 7.138L8.47135 10.862C8.34634 10.987 8.1768 11.0572 8.00002 11.0572C7.82325 11.0572 7.65371 10.987 7.52869 10.862L3.80469 7.138C3.71148 7.04476 3.64801 6.92599 3.6223 6.79669C3.59659 6.66738 3.60979 6.53336 3.66024 6.41156C3.71068 6.28976 3.79611 6.18565 3.90572 6.1124C4.01532 6.03914 4.14419 6.00003 4.27602 6Z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                {errors.category && (
-                  <p className="mt-1 text-xs text-warning">{errors.category.message}</p>
+                <Input
+                  placeholder="Type discount percentage..."
+                  {...register("discountPercentage")}
+                  className={
+                    errors.discountPercentage ? "border-warning focus-visible:border-warning" : ""
+                  }
+                />
+                {errors.discountPercentage && (
+                  <p className="mt-1 text-xs text-warning">{errors.discountPercentage.message}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Inventory */}
+          <div className="order-4 lg:col-start-1 lg:row-start-3 bg-white rounded-xl p-6 shadow-[0px_4px_30px_0px_#2E2D740D]">
+            <h2 className="text-base font-semibold text-dark mb-4">Inventory</h2>
+            <div className="grid grid-cols-2 gap-3.5">
+              <div>
+                <label className="block text-sm font-medium text-body mb-1.5">SKU</label>
+                <Input
+                  placeholder="Type product SKU here..."
+                  {...register("sku")}
+                  className={errors.sku ? "border-warning focus-visible:border-warning" : ""}
+                />
+                {errors.sku && <p className="mt-1 text-xs text-warning">{errors.sku.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-body mb-1.5">Quantity</label>
+                <Input
+                  placeholder="Type product quantity here..."
+                  {...register("stock")}
+                  className={errors.stock ? "border-warning focus-visible:border-warning" : ""}
+                />
+                {errors.stock && (
+                  <p className="mt-1 text-xs text-warning">{errors.stock.message}</p>
                 )}
               </div>
             </div>

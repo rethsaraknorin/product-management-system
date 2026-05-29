@@ -3,7 +3,8 @@ import axiosInstance from "@/lib/axios";
 import type { ProductsResponse } from "../types/product.types";
 
 export const PRODUCTS_LIMIT = 10;
-const SELECT_FIELDS = "title,price,sku,stock,category,thumbnail,meta,tags";
+const SELECT_FIELDS =
+  "title,description,price,discountPercentage,sku,stock,category,thumbnail,meta,tags";
 
 export function useProducts(page: number = 1, search: string = "") {
   const skip = (page - 1) * PRODUCTS_LIMIT;
