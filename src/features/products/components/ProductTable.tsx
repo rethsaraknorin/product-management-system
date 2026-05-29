@@ -118,17 +118,19 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 relative bg-gray-100 rounded-md overflow-hidden shrink-0">
-                      <Image
-                        src={product.thumbnail}
-                        alt={product.title}
-                        fill
-                        className="object-cover"
-                        sizes="40px"
-                      />
+                      {product.thumbnail ? (
+                        <Image
+                          src={product.thumbnail}
+                          alt={product.title}
+                          fill
+                          className="object-cover"
+                          sizes="40px"
+                        />
+                      ) : null}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-dark leading-tight">{product.title}</p>
-                      {product.tags.length > 0 && (
+                      {(product.tags?.length ?? 0) > 0 && (
                         <p className="text-xs text-neutral mt-0.5">
                           {product.tags.length} Variants
                         </p>

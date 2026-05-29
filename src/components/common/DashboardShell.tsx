@@ -10,7 +10,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
@@ -46,7 +46,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden">{children}</div>
+        <div className="flex-1 flex flex-col overflow-hidden">{children}</div>
       </div>
     </div>
   );
