@@ -91,7 +91,7 @@ export function ProductForm({ defaultValues, productId, mode }: ProductFormProps
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary text-dark text-sm transition-colors hover:bg-secondary/80 cursor-pointer">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary text-dark text-sm transition-colors hover:bg-secondary/80 cursor-pointer">
             <span>Nik Shop</span>
             <svg
               width="20"
@@ -199,7 +199,7 @@ export function ProductForm({ defaultValues, productId, mode }: ProductFormProps
                   placeholder="Type product description here..."
                   {...register("description")}
                   rows={6}
-                  className="w-full px-3 py-2 text-sm text-dark placeholder:text-neutral border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-colors"
+                  className="w-full px-3 py-2 text-base md:text-sm text-dark placeholder:text-neutral border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-colors"
                 />
               </div>
             </div>
@@ -213,7 +213,7 @@ export function ProductForm({ defaultValues, productId, mode }: ProductFormProps
               <div className="relative">
                 <select
                   {...register("category")}
-                  className={`w-full h-9 px-3 pr-8 text-sm text-neutral bg-white border rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-colors ${errors.category ? "border-warning" : "border-gray-200"}`}
+                  className={`w-full h-9 px-3 pr-8 text-base md:text-sm text-neutral bg-white border rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-colors ${errors.category ? "border-warning" : "border-gray-200"}`}
                 >
                   <option value="">Select a category</option>
                   {categoriesLoading ? (

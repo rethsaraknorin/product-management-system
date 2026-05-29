@@ -45,7 +45,7 @@ export function ProductListContent() {
         <div className="flex items-center justify-between px-5.25 py-3.5 h-15 bg-white border-b shrink-0 gap-2.5">
           <h1 className="text-base md:text-xl font-semibold text-dark">Product</h1>
           <div className="flex items-center gap-2 md:gap-3">
-            <button className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary text-dark text-sm transition-colors hover:bg-secondary/80">
+            <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary text-dark text-sm transition-colors hover:bg-secondary/80">
               Nik Shop
               <ChevronDown size={14} />
             </button>
@@ -83,38 +83,46 @@ export function ProductListContent() {
         </div>
 
         {/* Tabs + secondary filters */}
-        <div className="flex items-center justify-between px-4 md:px-6 py-3 bg-white border-b shrink-0 gap-3">
-          <div className="flex items-center gap-2 p-1 border border-gray-200 rounded-lg h-10 overflow-x-auto scrollbar-none shrink-0">
-            {TABS.map((tab) => (
-              <button
-                key={tab}
-                className={cn(
-                  "px-3 h-8 rounded-md text-sm font-medium transition-colors whitespace-nowrap",
-                  tab === "All Product" ? "bg-brand/15 text-brand" : "text-neutral hover:text-body"
-                )}
-              >
-                {tab}
-              </button>
-            ))}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between px-4 md:px-6 py-3 bg-white border-b shrink-0 gap-2 md:gap-3">
+          {/* Tabs row */}
+          <div className="relative">
+            <div className="flex items-center gap-2 p-1 border border-gray-200 rounded-lg h-10 overflow-x-auto scrollbar-none">
+              {TABS.map((tab) => (
+                <button
+                  key={tab}
+                  className={cn(
+                    "px-3 h-8 rounded-md text-sm font-medium transition-colors whitespace-nowrap",
+                    tab === "All Product"
+                      ? "bg-brand/15 text-brand"
+                      : "text-neutral hover:text-body"
+                  )}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+            <div className="absolute right-0 top-0 h-full w-8 bg-linear-to-l from-white to-transparent pointer-events-none rounded-r-lg md:hidden" />
           </div>
-          <div className="hidden md:flex items-center gap-2 shrink-0">
-            <div className="relative">
+
+          {/* Filters row */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 md:flex-none">
               <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral pointer-events-none" />
               <Input
                 type="text"
                 placeholder="Search product..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="h-10 pl-8 pr-3 w-44"
+                className="h-10 pl-8 pr-3 w-full md:w-44"
               />
             </div>
-            <button className="flex items-center gap-1.5 h-10 px-3 text-sm border border-gray-200 rounded-lg text-neutral hover:text-body hover:bg-gray-50 transition-colors whitespace-nowrap">
+            <button className="flex items-center gap-1.5 h-10 px-3 text-sm border border-gray-200 rounded-lg text-neutral hover:text-body hover:bg-gray-50 transition-colors whitespace-nowrap shrink-0">
               <CalendarIcon />
-              Select Date
+              <span className="hidden sm:inline">Select Date</span>
             </button>
-            <button className="flex items-center gap-1.5 h-10 px-3 text-sm border border-gray-200 rounded-lg text-neutral hover:text-body hover:bg-gray-50 transition-colors">
+            <button className="flex items-center gap-1.5 h-10 px-3 text-sm border border-gray-200 rounded-lg text-neutral hover:text-body hover:bg-gray-50 transition-colors shrink-0">
               <FiltersIcon />
-              Filters
+              <span className="hidden sm:inline">Filters</span>
             </button>
           </div>
         </div>
