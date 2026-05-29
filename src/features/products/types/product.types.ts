@@ -6,7 +6,9 @@ export interface ProductMeta {
 export interface Product {
   id: number;
   title: string;
+  description?: string;
   price: number;
+  discountPercentage?: number;
   sku: string;
   stock: number;
   category: string;
